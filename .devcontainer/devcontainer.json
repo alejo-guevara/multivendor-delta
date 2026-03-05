@@ -1,8 +1,6 @@
 {
   "name": "ContainerLab — Multivendor Delta Lab",
 
-  // Use ContainerLab's official devcontainer image (dood = Docker-outside-of-Docker)
-  // This is what the VS Code extension expects to find its socket/groups
   "image": "ghcr.io/srl-labs/containerlab/devcontainer-dood:latest",
 
   "runArgs": [
@@ -20,6 +18,8 @@
 
   "workspaceFolder": "${localWorkspaceFolder}",
   "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+
+  "onCreateCommand": "sudo groupadd -f clab_admins && sudo usermod -aG clab_admins,docker $(whoami)",
 
   "postCreateCommand": "bash .devcontainer/install.sh",
 
@@ -45,11 +45,7 @@
     }
   },
 
-  "forwardPorts": [
-    3000,
-    9090,
-    3080
-  ],
+  "forwardPorts": [3000, 9090, 3080],
 
   "portsAttributes": {
     "3000": {
@@ -70,7 +66,5 @@
     "cpus": 4,
     "memory": "8gb",
     "storage": "32gb"
-  },
-
-  "remoteUser": "vscode"
+  }
 }

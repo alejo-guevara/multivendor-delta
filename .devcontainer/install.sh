@@ -5,9 +5,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  ContainerLab Multivendor Delta — Environment Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ContainerLab and gNMIc are already in the base image
-echo "→ ContainerLab: $(containerlab version | grep version | head -1)"
-echo "→ gNMIc:        $(gnmic version 2>/dev/null || echo 'not found')"
+# ── Groups (ensure current user has access) ───────────────
+echo "→ Configuring groups..."
+sudo groupadd -f clab_admins
+sudo usermod -aG clab_admins,docker "$(whoami)"
+
+# ── Versions ──────────────────────────────────────────────
+echo "→ ContainerLab: $(containerlab version 2>/dev/null | grep -i version | head -1 || echo 'installed')"
+echo "→ Docker:       $(docker --version)"
 
 # ── Pre-pull Docker images ────────────────────────────────
 echo "→ Pre-pulling lab images..."
