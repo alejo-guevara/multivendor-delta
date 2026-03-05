@@ -2,8 +2,8 @@
 
 > Red multivendor con stack de telemetría completo — ContainerLab lo descarga todo
 
-Lab multivendor con topología en delta, generación de tráfico profesional con Ixia-c-one,
-pruebas simples con Alpine + iPerf3, y telemetría completa con gNMI → Prometheus → Grafana.
+Lab multivendor con topología en delta, generación de tráfico con Alpine + iPerf3,
+y telemetría completa con gNMI → Prometheus → Grafana.
 Sin licencias. Sin registro. Un solo comando.
 
 ---
@@ -17,16 +17,11 @@ Sin licencias. Sin registro. Un solo comando.
                  /   10.0.2.0/30    \
         [SR Linux D2L]──10.0.2.8/30──[Cumulus VX]
          10.255.0.1                   10.255.0.3
-          e1-3 | e1-4           swp3 | swp4
-               |                     |
-         ┌─────┴──────────────────────┴─────┐
-         │        ixia-c-one                │
-         │  eth1 (TX)        eth2 (RX)      │
-         │  10.0.1.2/30      10.0.3.2/30    │
-         └──────────────────────────────────┘
-         [Alpine TX]              [Alpine RX]
-          10.0.10.2/30             10.0.11.2/30
-          (iPerf client)           (iPerf server)
+          e1-3                          swp3
+           |                             |
+      [Alpine TX]                   [Alpine RX]
+       10.0.10.2/30                  10.0.11.2/30
+       (iPerf client)                (iPerf server)
 ```
 
 ### Rutas disponibles
@@ -84,22 +79,18 @@ sudo containerlab inspect -t multivendor-delta.clab.yml
 
 ## 📊 Telemetría
 
-La telemetría cubre dos perspectivas complementarias:
-
 | Fuente | Protocolo | Métricas |
 |--------|-----------|----------|
 | **SR Linux** | gNMI → gNMIc → Prometheus | Interfaces, BGP, OSPF |
-| **Ixia-c-one** | REST API → Prometheus | TX/RX frames, pérdida, latencia |
 
-Ambas fuentes alimentan el dashboard de Grafana, auto-provisionado en el despliegue.
+El dashboard de Grafana se auto-provisiona en el despliegue.
 
 ---
 
-## 🧪 Demo 1 — iPerf (Prueba simple)
+## 🧪 Demo — iPerf
 
 ### Desde Alpine TX hacia Alpine RX
 ```bash
-# En Alpine TX
 docker exec -it clab-multivendor-delta-alpine-tx sh
 iperf3 -c 10.0.11.2 -u -b 10M -t 60
 
@@ -119,27 +110,7 @@ docker exec -it clab-multivendor-delta-srl-d2l \
   sr_cli "interface ethernet-1/2 admin-state enable"
 ```
 
----
-
-## 🎯 Demo 2 — Ixia-c-one (Tráfico Profesional)
-
-### Instalar otgen CLI
-```bash
-bash -c "$(curl -sL https://get.otgcdn.net/otgen)"
-```
-
-### Iniciar flujo continuo de tráfico
-```bash
-export OTG_API="https://172.100.100.20:8443"
-
-otgen run --insecure \
-  --file ixia/otg-flow.yaml \
-  --json --metrics flow | \
-otgen transform --metrics flow | \
-otgen display --mode table
-```
-
-### Forzar tráfico por el camino de 2 saltos (ingeniería de tráfico)
+### Forzar 2-hop vía métrica OSPF
 ```bash
 docker exec -it clab-multivendor-delta-srl-d2l sr_cli << 'EOF'
 enter candidate
@@ -161,11 +132,9 @@ Abrir en el navegador: **http://localhost:3000**
 | Panel | Fuente | Descripción |
 |-------|--------|-------------|
 | Path Selection | SR Linux | Camino activo (1-hop vs 2-hop) |
-| Ixia TX vs RX | Ixia | Frames/s transmitidos vs recibidos |
 | SR Linux Interface Traffic | SR Linux | Tráfico en bps por interfaz |
 | BGP Session States | SR Linux | Estado de sesiones iBGP |
 | OSPF Neighbor Count | SR Linux | Vecinos OSPF activos |
-| Packet Loss | Ixia | Pérdida de paquetes por flujo (%) |
 | 1-hop vs 2-hop Comparison | SR Linux | Carga comparada entre los dos caminos |
 
 ---
@@ -185,12 +154,10 @@ multivendor-delta/
 │   ├── daemons                   # FRR daemons habilitados
 │   └── frr.conf                  # Config OSPF + iBGP
 ├── srl-d2l/
-│   ├── config.json               # SR Linux startup config
+│   ├── config.cli                # SR Linux startup config
 │   └── gnmic.yml                 # Colector gNMI → Prometheus
 ├── cvx1/
 │   └── frr.conf                  # Config OSPF + iBGP Cumulus
-├── ixia/
-│   └── otg-flow.yaml             # Definición de flujos Ixia-c-one
 ├── prometheus/
 │   └── prometheus.yml            # Config scraping
 └── grafana/
