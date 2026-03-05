@@ -5,27 +5,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  ContainerLab Multivendor Delta — Environment Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ── System packages ──────────────────────────────────────
-echo "→ Installing system packages..."
-sudo apt-get update -qq
-sudo apt-get install -y -qq \
-  curl wget git jq tree \
-  iproute2 iputils-ping \
-  python3 python3-pip
-
-# ── ContainerLab ─────────────────────────────────────────
-echo "→ Installing ContainerLab..."
-bash -c "$(curl -sL https://get.containerlab.dev)"
-containerlab version
-
-# ── gNMIc CLI ────────────────────────────────────────────
-echo "→ Installing gNMIc CLI..."
-bash -c "$(curl -sL https://get-gnmic.openconfig.net)"
-gnmic version
+# ContainerLab and gNMIc are already in the base image
+echo "→ ContainerLab: $(containerlab version | grep version | head -1)"
+echo "→ gNMIc:        $(gnmic version 2>/dev/null || echo 'not found')"
 
 # ── Pre-pull Docker images ────────────────────────────────
-echo "→ Pre-pulling lab images (this takes a few minutes)..."
-
+echo "→ Pre-pulling lab images..."
 images=(
   "ghcr.io/nokia/srlinux:latest"
   "frrouting/frr:latest"
@@ -35,15 +20,13 @@ images=(
   "grafana/grafana:latest"
   "ghcr.io/openconfig/gnmic:latest"
 )
-
 for img in "${images[@]}"; do
   echo "  pulling $img..."
   docker pull "$img" || echo "  ⚠ Failed to pull $img — will pull on deploy"
 done
 
 # ── Handy aliases ─────────────────────────────────────────
-echo "→ Setting up aliases..."
-cat >> ~/.bashrc << 'ALIASES'
+grep -q 'clab-deploy' ~/.bashrc || cat >> ~/.bashrc << 'ALIASES'
 
 # ContainerLab shortcuts
 alias clab-deploy='sudo containerlab deploy -t multivendor-delta.clab.yml'
@@ -63,9 +46,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ Setup complete!"
 echo ""
-echo "  Deploy the lab:"
-echo "    sudo containerlab deploy -t multivendor-delta.clab.yml"
-echo ""
+echo "  Deploy:     sudo containerlab deploy -t multivendor-delta.clab.yml"
 echo "  Grafana:    http://localhost:3000  (admin/admin)"
 echo "  Prometheus: http://localhost:9090"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
