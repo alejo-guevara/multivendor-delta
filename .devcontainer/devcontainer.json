@@ -1,0 +1,8 @@
+{
+  "name": "Network Lab",
+  "postCreateCommand": "bash -c '$(curl -sL https://get.containerlab.dev)'",
+  "runArgs": ["--privileged"],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  }
+}
