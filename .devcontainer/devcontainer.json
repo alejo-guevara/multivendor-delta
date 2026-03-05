@@ -1,8 +1,60 @@
 {
-  "name": "Network Lab",
-  "postCreateCommand": "bash -c '$(curl -sL https://get.containerlab.dev)'",
-  "runArgs": ["--privileged"],
+  "name": "ContainerLab — Multivendor Delta Lab",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  // Required for ContainerLab — needs privileged mode to create
+  // Linux network namespaces and veth pairs
+  "runArgs": [
+    "--privileged",
+    "--cgroupns=host",
+    "--pid=host"
+  ],
+
+  "mounts": [
+    // Give ContainerLab access to the Docker socket
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
-  }
+    // Docker CLI inside the devcontainer
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  "postCreateCommand": "bash .devcontainer/install.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "srl-labs.vscode-containerlab",   // ContainerLab topology viewer
+        "redhat.vscode-yaml",              // YAML validation + schema
+        "ms-azuretools.vscode-docker",     // Docker container management
+        "golang.go"                        // Useful for gnmic/clab source
+      ],
+      "settings": {
+        "yaml.schemas": {
+          "https://containerlab.dev/schema/clab.schema.json": "*.clab.yml"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+
+  "forwardPorts": [
+    3000,   // Grafana
+    9090    // Prometheus
+  ],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Grafana",
+      "onAutoForward": "openBrowser"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "remoteUser": "vscode"
 }
