@@ -1,0 +1,126 @@
+name: multivendor-delta
+
+mgmt:
+  network: mgmt-delta
+  ipv4-subnet: 172.100.100.0/24
+
+topology:
+
+  defaults:
+    env:
+      CLAB_MGMT_VRF: mgmt
+
+  nodes:
+
+    ##############################################
+    # ROUTERS — Delta Triangle
+    ##############################################
+
+    # Nokia SR Linux 7220 IXR-D2L — Left corner
+    srl-d2l:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:latest
+      type: ixr-d2l
+      startup-config: srl-d2l/config.cli
+      mgmt-ipv4: 172.100.100.11
+
+    # FRRouting — Top of delta (iBGP + OSPF transit)
+    frr1:
+      kind: linux
+      image: frrouting/frr:latest
+      mgmt-ipv4: 172.100.100.12
+      binds:
+        - frr1/daemons:/etc/frr/daemons
+        - frr1/frr.conf:/etc/frr/frr.conf
+
+    # Cumulus VX — Right corner
+    cvx1:
+      kind: cvx
+      image: networkop/cx:4.4.0
+      runtime: docker
+      mgmt-ipv4: 172.100.100.13
+      startup-config: cvx1/frr.conf
+
+    ##############################################
+    # TRAFFIC GENERATION — iPerf
+    ##############################################
+
+    # iPerf TX — client (connected to SR Linux)
+    alpine-tx:
+      kind: linux
+      image: alpine:latest
+      mgmt-ipv4: 172.100.100.21
+      entrypoint: /bin/sh
+      cmd: "-c 'sleep infinity'"
+      exec:
+        - sh -c "until apk add --no-cache iperf3 iproute2; do sleep 2; done"
+        - ip addr add 10.0.10.2/30 dev eth1
+        - ip route add 10.0.0.0/8 via 10.0.10.1
+
+    # iPerf RX — server (connected to Cumulus)
+    alpine-rx:
+      kind: linux
+      image: alpine:latest
+      mgmt-ipv4: 172.100.100.22
+      entrypoint: /bin/sh
+      cmd: "-c 'sleep infinity'"
+      exec:
+        - sh -c "until apk add --no-cache iperf3 iproute2; do sleep 2; done"
+        - ip addr add 10.0.11.2/30 dev eth1
+        - ip route add 10.0.0.0/8 via 10.0.11.1
+        - iperf3 -s -D
+
+    ##############################################
+    # TELEMETRY STACK
+    ##############################################
+
+    # Prometheus — metrics scraper
+    prometheus:
+      kind: linux
+      image: prom/prometheus:latest
+      mgmt-ipv4: 172.100.100.30
+      binds:
+        - prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      ports:
+        - 9090:9090
+
+    # Grafana — visualization
+    grafana:
+      kind: linux
+      image: grafana/grafana:latest
+      mgmt-ipv4: 172.100.100.31
+      binds:
+        - grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+        - grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      ports:
+        - 3000:3000
+      env:
+        GF_SECURITY_ADMIN_PASSWORD: admin
+        GF_SECURITY_ADMIN_USER: admin
+        GF_AUTH_ANONYMOUS_ENABLED: "true"
+
+    # gNMIc — SR Linux telemetry collector → Prometheus
+    gnmic:
+      kind: linux
+      image: ghcr.io/openconfig/gnmic:latest
+      mgmt-ipv4: 172.100.100.32
+      binds:
+        - srl-d2l/gnmic.yml:/app/gnmic.yml
+      cmd: "--config /app/gnmic.yml subscribe"
+
+  links:
+    ##############################################
+    # Delta Triangle links
+    ##############################################
+    # SR Linux ↔ FRR  (left leg — 2-hop path)
+    - endpoints: ["srl-d2l:e1-1", "frr1:eth1"]
+    # FRR ↔ Cumulus   (right leg — 2-hop path)
+    - endpoints: ["frr1:eth2",    "cvx1:swp1"]
+    # SR Linux ↔ Cumulus (base — 1-hop shortcut)
+    - endpoints: ["srl-d2l:e1-2", "cvx1:swp2"]
+
+    ##############################################
+    # iPerf ports
+    ##############################################
+    - endpoints: ["alpine-tx:eth1", "srl-d2l:e1-3"]  # iPerf client → SR Linux
+    - endpoints: ["alpine-rx:eth1", "cvx1:swp3"]      # iPerf server ← Cumulus

@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+
+  # SR Linux telemetry via gNMIc exporter
+  - job_name: 'gnmic-srlinux'
+    static_configs:
+      - targets: ['172.100.100.32:9273']
+    metrics_path: /metrics
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

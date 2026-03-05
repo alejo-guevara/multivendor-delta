@@ -1,0 +1,49 @@
+username: admin
+password: NokiaSrl1!
+insecure: true
+encoding: json_ietf
+log: true
+
+targets:
+  srl-d2l:
+    address: 172.100.100.11:57400
+    subscriptions:
+      - if-stats
+      - bgp-stats
+      - ospf-stats
+
+subscriptions:
+  if-stats:
+    paths:
+      - /interface[name=ethernet-1/1]/statistics
+      - /interface[name=ethernet-1/2]/statistics
+      - /interface[name=ethernet-1/3]/statistics
+      - /interface[name=ethernet-1/4]/statistics
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+
+  bgp-stats:
+    paths:
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/session-state
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/received-routes
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/sent-routes
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+
+  ospf-stats:
+    paths:
+      - /network-instance[name=default]/protocols/ospf/instance[name=main]/statistics
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+
+outputs:
+  prom:
+    type: prometheus
+    listen: ":9273"
+    path: /metrics
+    metric-prefix: srl
+    append-subscription-name: true
+    export-timestamps: true

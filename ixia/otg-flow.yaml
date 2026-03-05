@@ -1,0 +1,80 @@
+# ============================================================
+# OTG Flow Configuration — Multivendor Delta Lab
+# Apply with: otgen run --insecure --api https://<ixia-ip>:8443 --file otg-flow.yaml
+# ============================================================
+
+ports:
+  - name: p1
+    location: eth1        # Connected to SR Linux e1-3
+  - name: p2
+    location: eth2        # Connected to Cumulus swp3
+
+# Virtual devices — Ixia emulates a router on each port
+# This enables ARP and proper L3 forwarding through the network
+devices:
+  - name: otg1
+    ethernets:
+      - name: otg1.eth1
+        port_name: p1
+        mac: "aa:bb:cc:00:01:01"
+        ipv4_addresses:
+          - name: otg1.eth1.ipv4
+            address: 10.0.1.2
+            prefix: 30
+            gateway: 10.0.1.1     # SR Linux e1-3
+
+  - name: otg2
+    ethernets:
+      - name: otg2.eth1
+        port_name: p2
+        mac: "aa:bb:cc:00:02:01"
+        ipv4_addresses:
+          - name: otg2.eth1.ipv4
+            address: 10.0.3.2
+            prefix: 30
+            gateway: 10.0.3.1     # Cumulus swp3
+
+# ============================================================
+# Flow 1 — Continuous UDP stream TX→RX
+# Default path follows BGP best path (1-hop shortcut)
+# ============================================================
+flows:
+  - name: ixia-delta-flow
+    tx_rx:
+      choice: device
+      device:
+        mode: mesh
+        tx_names: ["otg1.eth1.ipv4"]
+        rx_names: ["otg2.eth1.ipv4"]
+    packet:
+      - choice: ethernet
+        ethernet:
+          dst: { choice: auto }
+          src: { choice: value, value: "aa:bb:cc:00:01:01" }
+      - choice: ipv4
+        ipv4:
+          src: { choice: value, value: "10.0.1.2" }
+          dst: { choice: value, value: "10.0.3.2" }
+          priority:
+            choice: dscp
+            dscp:
+              phb: { choice: value, value: 0 }
+      - choice: udp
+        udp:
+          src_port: { choice: value, value: 5000 }
+          dst_port: { choice: value, value: 5001 }
+    rate:
+      choice: pps
+      pps: 1000                   # 1000 packets/sec default
+    size:
+      choice: fixed
+      fixed: 512                  # 512 byte frames
+    duration:
+      choice: continuous          # Run until stopped
+    metrics:
+      enable: true
+      loss: true
+      timestamps: true
+      latency:
+        enable: true
+        mode: store_forward
