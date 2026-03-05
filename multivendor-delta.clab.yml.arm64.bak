@@ -19,7 +19,7 @@ topology:
     # Nokia SR Linux 7220 IXR-D2L — Left corner
     srl-d2l:
       kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:latest  # ARM64: ghcr.io/nokia/srlinux:25.3.2-312-arm64
+      image: ghcr.io/nokia/srlinux:25.3.2-312-arm64
       type: ixr-d2l
       startup-config: srl-d2l/config.cli
       mgmt-ipv4: 172.100.100.11
