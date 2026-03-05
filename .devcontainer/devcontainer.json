@@ -1,48 +1,54 @@
 {
   "name": "ContainerLab — Multivendor Delta Lab",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
 
-  // Required for ContainerLab — needs privileged mode to create
-  // Linux network namespaces and veth pairs
+  // Use ContainerLab's official devcontainer image (dood = Docker-outside-of-Docker)
+  // This is what the VS Code extension expects to find its socket/groups
+  "image": "ghcr.io/srl-labs/containerlab/devcontainer-dood:latest",
+
   "runArgs": [
-    "--privileged",
-    "--cgroupns=host",
-    "--pid=host"
+    "--network=host",
+    "--pid=host",
+    "--privileged"
   ],
 
   "mounts": [
-    // Give ContainerLab access to the Docker socket
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "type=bind,src=/var/run/netns,dst=/var/run/netns",
+    "type=bind,src=/var/lib/docker/containers,dst=/var/lib/docker/containers",
+    "type=bind,src=/lib/modules,dst=/lib/modules"
   ],
 
-  "features": {
-    // Docker CLI inside the devcontainer
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
-  },
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
 
   "postCreateCommand": "bash .devcontainer/install.sh",
 
   "customizations": {
     "vscode": {
       "extensions": [
-        "srl-labs.vscode-containerlab",   // ContainerLab topology viewer
-        "redhat.vscode-yaml",              // YAML validation + schema
-        "ms-azuretools.vscode-docker",     // Docker container management
-        "golang.go"                        // Useful for gnmic/clab source
+        "srl-labs.vscode-containerlab",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "yaml.schemas": {
           "https://containerlab.dev/schema/clab.schema.json": "*.clab.yml"
         },
         "terminal.integrated.defaultProfile.linux": "bash",
-        "editor.formatOnSave": true
+        "containerlab.node.execCommandMapping": {
+          "nokia_srlinux": "sr_cli"
+        },
+        "containerlab.node.sshUserMapping": {
+          "nokia_srlinux": "admin"
+        }
       }
     }
   },
 
   "forwardPorts": [
-    3000,   // Grafana
-    9090    // Prometheus
+    3000,
+    9090,
+    3080
   ],
 
   "portsAttributes": {
@@ -53,7 +59,17 @@
     "9090": {
       "label": "Prometheus",
       "onAutoForward": "notify"
+    },
+    "3080": {
+      "label": "ContainerLab Graph",
+      "onAutoForward": "notify"
     }
+  },
+
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
   },
 
   "remoteUser": "vscode"
