@@ -32,6 +32,9 @@ topology:
       binds:
         - frr1/daemons:/etc/frr/daemons
         - frr1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip link set eth1 mtu 1500
+        - ip link set eth2 mtu 1500
 
     # Cumulus VX — Right corner
     cvx1:
