@@ -59,5 +59,4 @@ set / network-instance default protocols bgp neighbor 10.255.0.2 description "FR
 set / network-instance default protocols bgp neighbor 10.255.0.3 admin-state enable
 set / network-instance default protocols bgp neighbor 10.255.0.3 peer-group ibgp-peers
 set / network-instance default protocols bgp neighbor 10.255.0.3 description "Cumulus VX"
-set / network-instance default protocols bgp afi-safi ipv4-unicast aggregate-route 10.0.10.0/30 generate-icmp true
 set / network-instance default protocols bgp admin-state enable
