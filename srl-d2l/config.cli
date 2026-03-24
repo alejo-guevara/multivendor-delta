@@ -41,9 +41,12 @@ set / network-instance default protocols ospf instance main area 0.0.0.0 interfa
 set / network-instance default protocols ospf instance main area 0.0.0.0 interface lo0.0 admin-state enable
 set / network-instance default protocols ospf instance main area 0.0.0.0 interface lo0.0 passive true
 
+set / routing-policy policy export-all default-action policy-result accept
+
 set / network-instance default protocols bgp autonomous-system 65000
 set / network-instance default protocols bgp router-id 10.255.0.1
 set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+set / network-instance default protocols bgp group ibgp-peers export-policy [ export-all ]
 set / network-instance default protocols bgp group ibgp-peers admin-state enable
 set / network-instance default protocols bgp group ibgp-peers peer-as 65000
 set / network-instance default protocols bgp group ibgp-peers local-as as-number 65000
@@ -56,4 +59,5 @@ set / network-instance default protocols bgp neighbor 10.255.0.2 description "FR
 set / network-instance default protocols bgp neighbor 10.255.0.3 admin-state enable
 set / network-instance default protocols bgp neighbor 10.255.0.3 peer-group ibgp-peers
 set / network-instance default protocols bgp neighbor 10.255.0.3 description "Cumulus VX"
+set / network-instance default protocols bgp afi-safi ipv4-unicast aggregate-route 10.0.10.0/30 generate-icmp true
 set / network-instance default protocols bgp admin-state enable
