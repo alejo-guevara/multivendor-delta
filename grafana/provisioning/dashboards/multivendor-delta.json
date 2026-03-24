@@ -17,7 +17,7 @@
         "x": 0,
         "y": 0,
         "w": 6,
-        "h": 4
+        "h": 8
       },
       "options": {
         "reduceOptions": {
@@ -141,7 +141,7 @@
     },
     {
       "id": 4,
-      "title": "\ud83e\udd1d BGP Session States",
+      "title": "\ud83d\udd35 BGP Remote Peer AS",
       "type": "stat",
       "gridPos": {
         "x": 12,
@@ -189,17 +189,34 @@
                 }
               }
             }
-          ]
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
         }
       },
       "targets": [
         {
-          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_peer_as{peer_address='10.255.0.2'}",
-          "legendFormat": "FRR (10.255.0.2) \u2014 AS{{value}}"
+          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_peer_as{neighbor_peer_address='10.255.0.2'}",
+          "legendFormat": "FRR \u2014 AS{{value}}"
         },
         {
-          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_peer_as{peer_address='10.255.0.3'}",
-          "legendFormat": "Cumulus (10.255.0.3) \u2014 AS{{value}}"
+          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_peer_as{neighbor_peer_address='10.255.0.3'}",
+          "legendFormat": "Cumulus \u2014 AS{{value}}"
         }
       ],
       "description": ""
@@ -212,7 +229,7 @@
         "x": 0,
         "y": 16,
         "w": 6,
-        "h": 4
+        "h": 8
       },
       "options": {
         "reduceOptions": {
@@ -233,22 +250,22 @@
     },
     {
       "id": 6,
-      "title": "\ud83d\udce6 BGP Prefixes Received",
+      "title": "\ud83d\udce6 BGP Routes Received",
       "type": "stat",
       "gridPos": {
         "x": 6,
         "y": 16,
         "w": 6,
-        "h": 4
+        "h": 8
       },
       "targets": [
         {
-          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_received_messages_total_updates{peer_address='10.255.0.2'}",
-          "legendFormat": "From FRR"
+          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_afi_safi_received_routes{neighbor_peer_address='10.255.0.2',afi_safi_afi_safi_name='ipv4-unicast'}",
+          "legendFormat": "FRR (10.255.0.2)"
         },
         {
-          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_received_messages_total_updates{peer_address='10.255.0.3'}",
-          "legendFormat": "From Cumulus"
+          "expr": "srl_bgp_stats_srl_nokia_network_instance_network_instance_protocols_srl_nokia_bgp_bgp_neighbor_afi_safi_received_routes{neighbor_peer_address='10.255.0.3',afi_safi_afi_safi_name='ipv4-unicast'}",
+          "legendFormat": "Cumulus (10.255.0.3)"
         }
       ],
       "description": ""
@@ -265,55 +282,8 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "## Delta Topology \u2014 IP Plan\n\n```\n             [FRR \u2014 10.255.0.2]\n            /   10.0.2.0/30    \\\n    10.0.2.1      10.0.2.5      10.0.2.6\n          /                         \\\n  [SR Linux]  \u2500\u250010.0.2.8/30\u2500\u2500  [Cumulus]\n  10.255.0.1                   10.255.0.3\n   e1-3|e1-4                   swp3|swp4\n       |                           |\n  [Ixia eth1]           [Ixia eth2 / Alpine RX]\n   10.0.1.2/30              10.0.3.2/30\n  [Alpine TX]\n   10.0.10.2/30\n```\n\n**AS:** 65000 (iBGP full mesh)\n**OSPF Area:** 0.0.0.0\n**Loopbacks:** 10.255.0.x/32"
+        "content": "## Delta Topology \u2014 IP Plan\n\n```\n             [FRR \u2014 10.255.0.2]\n            /   10.0.2.0/30    \\\n    10.0.2.1      10.0.2.5      10.0.2.6\n          /                         \\\n  [SR Linux]  \u2500\u250010.0.2.8/30\u2500\u2500  [Cumulus]\n  10.255.0.1                   10.255.0.3\n      e1-3                        swp3\n       |                            |\n  [Alpine TX]                 [Alpine RX]\n  10.0.10.2/30                10.0.11.2/30\n  (iPerf client)              (iPerf server)\n```\n\n**AS:** 65000 (iBGP full mesh)\n**OSPF Area:** 0.0.0.0\n**Loopbacks:** 10.255.0.x/32"
       },
-      "description": ""
-    },
-    {
-      "id": 8,
-      "title": "\u26a1 Packet Loss \u2014 Ixia Flow",
-      "type": "timeseries",
-      "gridPos": {
-        "x": 0,
-        "y": 20,
-        "w": 12,
-        "h": 8
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 20
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.1
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          }
-        }
-      },
-      "targets": [
-        {
-          "expr": "100 * (1 - clamp_min(rate(srl_if_stats_srl_nokia_interfaces_interface_statistics_in_packets{interface_name='ethernet-1/3'}[30s]), 0.001) / clamp_min(rate(srl_if_stats_srl_nokia_interfaces_interface_statistics_out_packets{interface_name='ethernet-1/3'}[30s]), 0.001))",
-          "legendFormat": "Estimated Loss %"
-        }
-      ],
       "description": ""
     },
     {
@@ -321,10 +291,10 @@
       "title": "\ud83d\udd01 1-hop vs 2-hop \u2014 Interface Load Comparison",
       "type": "bargauge",
       "gridPos": {
-        "x": 12,
-        "y": 20,
-        "w": 12,
-        "h": 8
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 6
       },
       "options": {
         "orientation": "horizontal",

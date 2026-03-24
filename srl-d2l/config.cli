@@ -42,11 +42,13 @@ set / network-instance default protocols ospf instance main area 0.0.0.0 interfa
 set / network-instance default protocols ospf instance main area 0.0.0.0 interface lo0.0 passive true
 
 set / routing-policy policy export-all default-action policy-result accept
+set / routing-policy policy import-all default-action policy-result accept
 
 set / network-instance default protocols bgp autonomous-system 65000
 set / network-instance default protocols bgp router-id 10.255.0.1
 set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
 set / network-instance default protocols bgp group ibgp-peers export-policy [ export-all ]
+set / network-instance default protocols bgp group ibgp-peers import-policy [ import-all ]
 set / network-instance default protocols bgp group ibgp-peers admin-state enable
 set / network-instance default protocols bgp group ibgp-peers peer-as 65000
 set / network-instance default protocols bgp group ibgp-peers local-as as-number 65000

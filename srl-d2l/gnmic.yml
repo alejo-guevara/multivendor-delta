@@ -26,10 +26,11 @@ subscriptions:
   bgp-stats:
     paths:
       - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/session-state
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/peer-as
       - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/sent-messages
       - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/received-messages
-      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/last-state
-      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/peer-as
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/afi-safi[afi-safi-name=ipv4-unicast]/active-routes
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/afi-safi[afi-safi-name=ipv4-unicast]/received-routes
     mode: stream
     stream-mode: sample
     sample-interval: 10s
